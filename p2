@@ -1,0 +1,293 @@
+import pygame
+import sys
+import random
+import time
+
+# Constantes para colores
+BLANCO = (255, 255, 255)
+NEGRO = (0, 0, 0)
+VERDE = (0, 255, 0)
+
+def presentacion_1(screen):
+    font = pygame.font.Font(None, 36)
+    nivel = None
+
+    while nivel is None:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                x, y = event.pos
+                if 100 <= x <= 200 and 100 <= y <= 150:
+                    nivel = 1
+                elif 100 <= x <= 200 and 200 <= y <= 250:
+                    nivel = 2
+
+        screen.fill(BLANCO)
+        text = font.render("TRES EN RAYA", True, NEGRO)
+        screen.blit(text, (50, 30))
+
+        pygame.draw.rect(screen, VERDE, (100, 100, 100, 50))
+        text = font.render("Fácil", True, NEGRO)
+        screen.blit(text, (125, 115))
+
+        pygame.draw.rect(screen, VERDE, (100, 200, 100, 50))
+        text = font.render("Difícil", True, NEGRO)
+        screen.blit(text, (120, 215))
+
+        pygame.display.flip()
+
+    return nivel
+
+def presentacion_2(screen):
+    font = pygame.font.Font(None, 36)
+    ficha = None
+
+    while ficha is None:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                x, y = event.pos
+                if 100 <= x <= 200 and 100 <= y <= 150:
+                    ficha = "O"
+                elif 100 <= x <= 200 and 200 <= y <= 250:
+                    ficha = "X"
+
+        screen.fill(BLANCO)
+        text = font.render("TRES EN RAYA", True, NEGRO)
+        screen.blit(text, (50, 30))
+
+        pygame.draw.rect(screen, VERDE, (100, 100, 100, 50))
+        text = font.render("O", True, NEGRO)
+        screen.blit(text, (140, 115))
+
+        pygame.draw.rect(screen, VERDE, (100, 200, 100, 50))
+        text = font.render("X", True, NEGRO)
+        screen.blit(text, (140, 215))
+
+        pygame.display.flip()
+
+    return ficha
+
+def mostrar_tablero(screen, tablero):
+    for fila in range(3):
+        for columna in range(3):
+            pygame.draw.rect(screen, NEGRO, (columna * 100, fila * 100, 100, 100), 2)
+            if tablero[fila][columna] == "X":
+                pygame.draw.line(screen, NEGRO, (columna * 100, fila * 100), ((columna + 1) * 100, (fila + 1) * 100), 2)
+                pygame.draw.line(screen, NEGRO, ((columna + 1) * 100, fila * 100), (columna * 100, (fila + 1) * 100), 2)
+            elif tablero[fila][columna] == "O":
+                pygame.draw.circle(screen, NEGRO, (columna * 100 + 50, fila * 100 + 50), 40, 2)
+
+def seguir_jugando(screen):
+    font = pygame.font.Font(None, 36)
+
+    pygame.time.delay(5000)  # Espera 5 segundos antes de preguntar
+
+    respuesta = None
+    while respuesta is None:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                x, y = event.pos
+                if 100 <= x <= 200 and 100 <= y <= 150:
+                    respuesta = True
+                elif 100 <= x <= 200 and 200 <= y <= 250:
+                    respuesta = False
+
+        screen.fill(BLANCO)
+        text = font.render("¿Jugar otra partida?", True, NEGRO)
+        screen.blit(text, (10, 30))
+
+        pygame.draw.rect(screen, VERDE, (100, 100, 100, 50))
+        text = font.render("Sí", True, NEGRO)
+        screen.blit(text, (140, 115))
+
+        pygame.draw.rect(screen, VERDE, (100, 200, 100, 50))
+        text = font.render("No", True, NEGRO)
+        screen.blit(text, (140, 215))
+
+        pygame.display.flip()
+
+    return respuesta
+
+def hay_ganador(tablero, jugador):
+    for i in range(3):
+        if all(tablero[i][j] == jugador for j in range(3)) or \
+           all(tablero[j][i] == jugador for j in range(3)):
+            return True
+    if all(tablero[i][i] == jugador for i in range(3)) or \
+       all(tablero[i][2 - i] == jugador for i in range(3)):
+        return True
+    return False
+
+def tablero_lleno(tablero):
+    return all(all(casilla != " " for casilla in fila) for fila in tablero)
+
+def casilla_libre(tablero, fila, columna):
+    return tablero[fila][columna] == " "
+
+def movimiento_jugador(screen, tablero, ficha):
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                x, y = event.pos
+                fila = y // 100
+                columna = x // 100
+                if 0 <= fila < 3 and 0 <= columna < 3 and casilla_libre(tablero, fila, columna):
+                    return fila, columna
+
+def mov_ordenador_facil(tablero, ficha):
+    while True:
+        fila = random.randint(0, 2)
+        columna = random.randint(0, 2)
+        if casilla_libre(tablero, fila, columna):
+            return fila, columna
+
+def mov_ordenador_dificil(tablero, ficha_maquina, ficha_usuario):
+    for i in range(9):
+        copia = [fila[:] for fila in tablero]
+        if casilla_libre(copia, i // 3, i % 3):
+            copia[i // 3][i % 3] = ficha_maquina
+            if hay_ganador(copia, ficha_maquina):
+                return i // 3, i % 3
+
+    for i in range(9):
+        copia = [fila[:] for fila in tablero]
+        if casilla_libre(copia, i // 3, i % 3):
+            copia[i // 3][i % 3] = ficha_usuario
+            if hay_ganador(copia, ficha_usuario):
+                return i // 3, i % 3
+
+    if ficha_maquina == "X":
+        if tablero[1][1] == " ":
+            return 1, 1
+
+        esquinas_vacias = [(0, 0), (0, 2), (2, 0), (2, 2)]
+        esquinas_vacias = [esquina for esquina in esquinas_vacias if casilla_libre(tablero, *esquina)]
+        demas_vacias = [(0, 1), (1, 0), (1, 2), (2, 1)]
+        demas_vacias = [otra for otra in demas_vacias if casilla_libre(tablero, *otra)]
+
+        if esquinas_vacias:
+            return esquinas_vacias[0]
+        elif demas_vacias:
+            return demas_vacias[0]
+
+    elif ficha_maquina == "O":
+        contador = sum(1 for i in range(9) if casilla_libre(tablero, i // 3, i % 3))
+        if contador == 7 and tablero[1][1] == " ":
+            return 1, 1
+
+    while True:
+        fila = random.randint(0, 2)
+        columna = random.randint(0, 2)
+        if casilla_libre(tablero, fila, columna):
+            return fila, columna
+
+def mostrar_resultado(screen, resultado):
+    font = pygame.font.Font(None, 36)
+    text = font.render(resultado, True, NEGRO)
+    screen.blit(text, (50, 150))
+    pygame.display.flip()
+    pygame.time.delay(3000)  # Espera 3 segundos antes de continuar
+
+def main():
+    pygame.init()
+
+    screen = pygame.display.set_mode((300, 300))
+    pygame.display.set_caption("Tres en Raya")
+
+    jugando = True
+
+    while jugando:
+        nivel = presentacion_1(screen)
+        ficha = presentacion_2(screen)
+
+        tablero = [[" "]*3 for _ in range(3)]
+
+        if ficha == "O":
+            turno = "O"
+        else:
+            turno = "X"
+
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+
+            screen.fill(BLANCO)
+            mostrar_tablero(screen, tablero)
+            pygame.display.flip()
+
+            if tablero_lleno(tablero):
+                mostrar_resultado(screen, "Empate")
+                break
+
+            elif turno == "X" and ficha == "X":
+                print("Turno del jugador humano:")
+                fila, columna = movimiento_jugador(screen, tablero, ficha)
+                tablero[fila][columna] = "X"
+                turno = "O"
+
+                if hay_ganador(tablero, "X"):
+                    mostrar_tablero(screen, tablero)
+                    mostrar_resultado(screen, "¡Has ganado!")
+                    break
+
+            elif turno == "O" and ficha == "O":
+                print("Turno del jugador humano:")
+                fila, columna = movimiento_jugador(screen, tablero, ficha)
+                tablero[fila][columna] = "O"
+                turno = "X"
+
+                if hay_ganador(tablero, "O"):
+                    mostrar_tablero(screen, tablero)
+                    mostrar_resultado(screen, "¡Has ganado!")
+                    break
+
+            elif turno == "X" and ficha == "O":
+                print("{:^47}".format("El ordenador está pensando ..."))
+                time.sleep(1)
+                if nivel == 1:
+                    fila, columna = mov_ordenador_facil(tablero, "X")
+                elif nivel == 2:
+                    fila, columna = mov_ordenador_dificil(tablero, "X", ficha)
+                tablero[fila][columna] = "X"
+                turno = "O"
+
+                if hay_ganador(tablero, "X"):
+                    mostrar_tablero(screen, tablero)
+                    mostrar_resultado(screen, "¡Has perdido!")
+                    break
+
+            elif turno == "O" and ficha == "X":
+                print("{:^47}".format("El ordenador está pensando ..."))
+                time.sleep(1)
+                if nivel == 1:
+                    fila, columna = mov_ordenador_facil(tablero, "O")
+                elif nivel == 2:
+                    fila, columna = mov_ordenador_dificil(tablero, "O", ficha)
+                tablero[fila][columna] = "O"
+                turno = "X"
+
+                if hay_ganador(tablero, "O"):
+                    mostrar_tablero(screen, tablero)
+                    mostrar_resultado(screen, "¡Has perdido!")
+                    break
+
+        jugando = seguir_jugando(screen)
+
+    pygame.quit()
+    print("Fin del juego")
+
+if __name__ == "__main__":
+    main()
